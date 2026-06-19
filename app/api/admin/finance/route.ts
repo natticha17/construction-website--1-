@@ -10,7 +10,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const records = store.getFinancialRecords()
+  const records = await store.getFinancialRecords()
   return NextResponse.json({ records })
 }
 
@@ -24,13 +24,13 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { projectId, projectName, type, category, description, amount, date } = body
+    const { projectId, projectName, type, category, description, amount, date, receiptImage } = body
 
     if (!projectId || !type || !category || !amount || !date) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    const record = store.createFinancialRecord({
+    const record = await store.createFinancialRecord({
       projectId,
       projectName,
       type,
@@ -38,6 +38,7 @@ export async function POST(request: Request) {
       description: description || "",
       amount,
       date,
+      receiptImage,
     })
 
     return NextResponse.json({ record })

@@ -10,6 +10,6 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const contracts = store.getContractsByCustomer(customerId.value)
+  const contracts = await store.getContractsByCustomer(customerId.value)
   return NextResponse.json({ contracts })
 }

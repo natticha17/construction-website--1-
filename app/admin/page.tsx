@@ -4,21 +4,22 @@ import { AdminHeader } from "@/components/admin/admin-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Users, TrendingUp, Wallet, ClipboardList, FileSignature } from "lucide-react"
 import { store } from "@/lib/store"
+import { Description } from "@radix-ui/react-toast"
 
 export default async function AdminDashboardPage() {
   const cookieStore = await cookies()
   const token = cookieStore.get("admin_token")
 
   if (!token) {
-    redirect("/admin/login")
+    redirect("/login")
   }
 
-  const housePlans = store.getHousePlans()
-  const customers = store.getUsers()
-  const quotations = store.getQuotations()
-  const contracts = store.getContracts()
-  const progressList = store.getProjectProgressList()
-  const financialRecords = store.getFinancialRecords()
+  const housePlans = await store.getHousePlans()
+  const customers = await store.getUsers()
+  const quotations = await store.getQuotations()
+  const contracts = await store.getContracts()
+  const progressList = await store.getProjectProgressList()
+  const financialRecords = await store.getFinancialRecords()
 
   const totalIncome = financialRecords.filter((r) => r.type === "income").reduce((sum, r) => sum + r.amount, 0)
   const totalExpense = financialRecords.filter((r) => r.type === "expense").reduce((sum, r) => sum + r.amount, 0)
@@ -41,7 +42,7 @@ export default async function AdminDashboardPage() {
       title: "ใบเสนอราคา",
       value: quotations.length.toString(),
       icon: ClipboardList,
-      description: `รออนุมัติ ${quotations.filter((q) => q.status === "pending").length} รายการ`,
+      description: `รอพิจารณา ${quotations.filter((q) => q.status === "pending").length} รายการ | ว่าจ้างแล้ว ${quotations.filter((q) => q.status === "approved").length} รายการ`,
     },
     {
       title: "สัญญาที่ดำเนินการ",
@@ -50,17 +51,17 @@ export default async function AdminDashboardPage() {
       description: `ทั้งหมด ${contracts.length} สัญญา`,
     },
     {
-      title: "โครงการกำลังดำเนินการ",
+      title: "โครงการทั้งหมด",
       value: progressList.length.toString(),
       icon: TrendingUp,
-      description: "โครงการที่กำลังก่อสร้าง",
+      description: `โครงการที่กำลังก่อสร้าง ${progressList.filter((p) => p.status === "progress" || (p.overallProgress > 0 && p.overallProgress < 100)).length} โครงการ | โครงการที่เสร็จสิ้น ${progressList.filter((p) => p.status === "completed" || p.overallProgress === 100).length} โครงการ`,
     },
     {
       title: "กำไร/ขาดทุน",
-      value: `${profit >= 0 ? "+" : ""}${profit.toLocaleString()}`,
+      value: `${(profit || 0) >= 0 ? "+" : ""}${(profit || 0).toLocaleString()}`,
       icon: Wallet,
-      description: `รายรับ ${totalIncome.toLocaleString()} | รายจ่าย ${totalExpense.toLocaleString()}`,
-      highlight: profit >= 0 ? "positive" : "negative",
+      description: `รายรับ ${(totalIncome || 0).toLocaleString()} | รายจ่าย ${(totalExpense || 0).toLocaleString()}`,
+      highlight: (profit || 0) >= 0 ? "positive" : "negative",
     },
   ]
 
@@ -78,13 +79,12 @@ export default async function AdminDashboardPage() {
               </CardHeader>
               <CardContent>
                 <div
-                  className={`text-3xl font-bold ${
-                    stat.highlight === "positive"
-                      ? "text-green-600"
-                      : stat.highlight === "negative"
-                        ? "text-red-600"
-                        : "text-card-foreground"
-                  }`}
+                  className={`text-3xl font-bold ${stat.highlight === "positive"
+                    ? "text-green-600"
+                    : stat.highlight === "negative"
+                      ? "text-red-600"
+                      : "text-card-foreground"
+                    }`}
                 >
                   {stat.value}
                 </div>
@@ -110,7 +110,7 @@ export default async function AdminDashboardPage() {
                         <span className="text-sm text-card-foreground">{q.customerName}</span>
                         <span className="text-xs text-muted-foreground ml-2">({q.housePlanName})</span>
                       </div>
-                      <span className="text-sm font-medium">{q.grandTotal.toLocaleString()} บาท</span>
+                      <span className="text-sm font-medium">{(q.grandTotal || 0).toLocaleString()} บาท</span>
                     </li>
                   ))}
                 </ul>

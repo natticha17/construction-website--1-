@@ -18,7 +18,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react"
-import type { HousePlan } from "@/lib/data"
+import { HousePlan } from "@/lib/types"
+
 
 export default function AdminHousePlansPage() {
   const [housePlans, setHousePlans] = useState<HousePlan[]>([])
@@ -32,11 +33,14 @@ export default function AdminHousePlansPage() {
 
   const fetchHousePlans = async () => {
     try {
-      const response = await fetch("/api/admin/house-plans")
-      const data = await response.json()
-      setHousePlans(data.housePlans)
+      const res = await fetch("/api/admin/house-plans")
+      const data = await res.json()
+
+      /* ✅ ยืนยันว่าใช้ property plans ที่ถูกต้องจาก route.ts */
+      setHousePlans(Array.isArray(data.plans) ? data.plans : [])
     } catch (error) {
       console.error("Error fetching house plans:", error)
+      setHousePlans([])
     } finally {
       setIsLoading(false)
     }
@@ -47,12 +51,12 @@ export default function AdminHousePlansPage() {
     setIsDeleting(true)
 
     try {
-      const response = await fetch(`/api/admin/house-plans/${deleteId}`, {
+      const res = await fetch(`/api/admin/house-plans/${deleteId}`, {
         method: "DELETE",
       })
 
-      if (response.ok) {
-        setHousePlans(housePlans.filter((p) => p.id !== deleteId))
+      if (res.ok) {
+        setHousePlans((prev) => prev.filter((p) => p.id !== deleteId))
       }
     } catch (error) {
       console.error("Error deleting house plan:", error)
@@ -82,16 +86,20 @@ export default function AdminHousePlansPage() {
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
+            ) : housePlans.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                ยังไม่มีแบบบ้านในระบบ
+              </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[100px]">รูปภาพ</TableHead>
                     <TableHead>ชื่อแบบบ้าน</TableHead>
-                    <TableHead>พื้นที่</TableHead>
+                    <TableHead>พื้นที่ใช้สอย</TableHead>
                     <TableHead>ห้องนอน</TableHead>
                     <TableHead>ราคา</TableHead>
-                    <TableHead className="text-right">จัดการ</TableHead>
+                    <TableHead className="text-right">จัดการข้อมูลแบบบ้าน</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -99,7 +107,12 @@ export default function AdminHousePlansPage() {
                     <TableRow key={plan.id}>
                       <TableCell>
                         <div className="relative w-16 h-12 rounded overflow-hidden">
-                          <Image src={plan.image || "/placeholder.svg"} alt={plan.name} fill className="object-cover" />
+                          <Image
+                            src={plan.image || "/placeholder.svg"}
+                            alt={plan.name}
+                            fill
+                            className="object-cover"
+                          />
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">{plan.name}</TableCell>
@@ -107,7 +120,7 @@ export default function AdminHousePlansPage() {
                       <TableCell>{plan.bedrooms}</TableCell>
                       <TableCell>{plan.price} บาท</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex justify-end gap-2">
                           <Button variant="outline" size="sm" asChild>
                             <Link href={`/admin/house-plans/${plan.id}`}>
                               <Pencil className="h-4 w-4" />
@@ -116,8 +129,8 @@ export default function AdminHousePlansPage() {
                           <Button
                             variant="outline"
                             size="sm"
+                            className="text-destructive"
                             onClick={() => setDeleteId(plan.id)}
-                            className="text-destructive hover:text-destructive"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -136,23 +149,18 @@ export default function AdminHousePlansPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>ยืนยันการลบ</AlertDialogTitle>
-            <AlertDialogDescription>คุณต้องการลบแบบบ้านนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้</AlertDialogDescription>
+            <AlertDialogDescription>
+              คุณต้องการลบแบบบ้านนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground"
             >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  กำลังลบ...
-                </>
-              ) : (
-                "ลบ"
-              )}
+              {isDeleting ? "กำลังลบ..." : "ลบ"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

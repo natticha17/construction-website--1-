@@ -1,7 +1,19 @@
 import { NextResponse } from "next/server"
-import { store } from "@/lib/store"
+import { connectDB } from "@/lib/mongodb"
+import HousePlan from "@/models/HousePlan"
 
 export async function GET() {
-  const housePlans = store.getHousePlans()
-  return NextResponse.json({ housePlans })
+  try {
+    await connectDB()
+
+    const housePlans = await HousePlan.find().sort({ createdAt: -1 })
+
+    return NextResponse.json({ housePlans })
+  } catch (error) {
+    console.error("Error fetching house plans:", error)
+    return NextResponse.json(
+      { housePlans: [] },
+      { status: 500 }
+    )
+  }
 }

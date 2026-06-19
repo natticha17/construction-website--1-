@@ -7,6 +7,12 @@ export interface User {
   name: string
   phone: string
   address: string
+  houseNo?: string
+  village?: string
+  road?: string
+  subDistrict?: string
+  district?: string
+  province?: string
   customerType: "general" | "project_owner" // ลูกค้าทั่วไป / เจ้าของโครงการ
   createdAt: string
   role: "customer" | "admin"
@@ -19,31 +25,45 @@ export interface HousePlan {
   area: string
   bedrooms: number
   bathrooms: number
-  price: string
+  kitchens?: number
+  livingRooms?: number
+  parking?: number
+  price: number
   description: string
-  features: string[]
+  type: string
+  style: string
+  floorPlanImages?: string[]
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface QuotationItem {
   id: string
+  category?: string
   materialName: string
   quantity: number
   unit: string
+  materialPrice: number
+  laborPrice: number
   pricePerUnit: number
   totalPrice: number
 }
 
 export interface Quotation {
   id: string
+  quotationNumber?: string
   customerId: string
   customerName: string
   housePlanId: string
   housePlanName: string
+  houseImage?: string
+  floorPlanImages?: string[]
   area: number
   budget: string
-  materialType: string
   additionalRequirements: string
   items: QuotationItem[]
+  totalMaterial?: number
+  totalLabor?: number
   laborCost: number
   operationCost: number
   tax: number
@@ -51,25 +71,73 @@ export interface Quotation {
   grandTotal: number
   notes: string
   conditions: string
-  status: "pending" | "approved" | "rejected"
+  revisionNote?: string
+  status: "pending" | "proposed" | "approved" | "rejected" | "revision_requested" | "revised"
   createdAt: string
   updatedAt: string
 }
 
+export interface Installment {
+  installmentNumber: number
+  amount: number
+  dueDate: string
+  description: string
+  tasks?: string[]
+}
+
+
+export interface Address {
+  houseNo: string
+  village: string
+  road: string
+  subDistrict: string
+  district: string
+  province: string
+}
+
 export interface Contract {
   id: string
+  contractNumber?: string
   customerId: string
   customerName: string
-  quotationId: string
+  customerAddress?: string
+  customerAddressStructured?: Address
+  customerPhone?: string
+  contractorName?: string
+  contractorAddress?: string
+  contractorAddressStructured?: Address
+
+  quotationId?: string
+  housePlanName?: string
+  houseImage?: string
+  floorPlanImages?: string[]
   projectName: string
   projectDetails: string
+  projectLocation?: string
+  projectLocationStructured?: Address
+
+  contractSignedDate?: string
+
   contractValue: number
   constructionPeriod: string
   startDate: string
   endDate: string
+
+  items?: QuotationItem[] // Material list from Quotation
+
+  installments?: Installment[]
+  warrantyDetails?: string
+  finePolicy?: string
+  amendmentPolicy?: string
+
   status: "pending" | "accepted" | "completed"
   acceptedAt?: string
   createdAt: string
+}
+
+export interface ChecklistItem {
+  task: string
+  completed: boolean
 }
 
 export interface ProgressMilestone {
@@ -77,11 +145,20 @@ export interface ProgressMilestone {
   phase: number
   description: string
   progressPercentage: number
+  checklist?: {
+    task: string
+    completed: boolean
+  }[]
   images: string[]
   updatedAt: string
+  report?: string
   paymentAmount: number
-  paymentStatus: "pending" | "paid"
+  paymentStatus: "pending" | "waiting_verification" | "paid"
+  paymentMethod?: "cash" | "transfer"
+  paymentSlip?: string
+  transferDate?: string
   paidAt?: string
+  checkedAt?: string
 }
 
 export interface ProjectProgress {
@@ -93,6 +170,7 @@ export interface ProjectProgress {
   overallProgress: number
   createdAt: string
   updatedAt: string
+  status: "progress" | "completed" | "pending"
 }
 
 export interface FinancialRecord {
@@ -104,6 +182,8 @@ export interface FinancialRecord {
   description: string
   amount: number
   date: string
+  referenceId?: string
+  receiptImage?: string
   createdAt: string
 }
 
@@ -113,5 +193,27 @@ export interface ContactInquiry {
   phone: string
   email: string
   message: string
+  status?: "new" | "replied"
   createdAt: string
+}
+
+export interface ShowcaseProject {
+  id: string
+  name: string
+  housePlanId?: string
+  location: string
+  description: string
+  images: string[]
+  completionDate: string
+  price?: number
+  bedrooms?: number
+  bathrooms?: number
+  kitchens?: number
+  livingRooms?: number
+  parking?: number
+  area?: number
+  ownerName?: string
+  subImages?: string[]
+  createdAt: string
+  updatedAt: string
 }

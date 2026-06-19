@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
-import { adminStore } from "@/lib/admin-store"
+import { store } from "@/lib/store"
 
 export async function GET() {
-  const inquiries = adminStore.getInquiries()
+  const inquiries = await store.getInquiries()
   return NextResponse.json({ inquiries })
 }

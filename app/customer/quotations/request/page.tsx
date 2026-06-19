@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,9 +13,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import type { HousePlan } from "@/lib/types"
 
-export default function RequestQuotationPage() {
+function RequestQuotationForm() {
   const router = useRouter()
   const [housePlans, setHousePlans] = useState<HousePlan[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -23,15 +24,29 @@ export default function RequestQuotationPage() {
     housePlanId: "",
     area: "",
     budget: "",
-    materialType: "มาตรฐาน",
     additionalRequirements: "",
   })
+
+  const searchParams = useSearchParams()
+  const planId = searchParams.get("planId")
 
   useEffect(() => {
     fetch("/api/house-plans")
       .then((res) => res.json())
-      .then((data) => setHousePlans(data.housePlans))
-  }, [])
+      .then((data) => {
+        setHousePlans(data.housePlans)
+        if (planId) {
+          const plan = data.housePlans.find((p: HousePlan) => p.id === planId)
+          if (plan) {
+            setFormData((prev) => ({
+              ...prev,
+              housePlanId: planId,
+              area: plan.area.toString(),
+            }))
+          }
+        }
+      })
+  }, [planId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,17 +119,24 @@ export default function RequestQuotationPage() {
 
               {selectedPlan && (
                 <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <img
-                    src={selectedPlan.image || "/placeholder.svg"}
-                    alt={selectedPlan.name}
-                    className="w-full h-40 object-cover rounded-lg mb-3"
-                  />
+                  <div className="relative w-full h-40 mb-3">
+                    <Image
+                      src={selectedPlan.image || "/placeholder.svg"}
+                      alt={selectedPlan.name || "House Plan"}
+                      fill
+                      className="object-cover rounded-lg"
+                    />
+                  </div>
                   <h4 className="font-semibold">{selectedPlan.name}</h4>
                   <p className="text-sm text-muted-foreground">{selectedPlan.description}</p>
                   <div className="mt-2 flex gap-4 text-sm">
                     <span>{selectedPlan.bedrooms} ห้องนอน</span>
                     <span>{selectedPlan.bathrooms} ห้องน้ำ</span>
-                    <span>{selectedPlan.area} ตร.ม.</span>
+                    <span>{selectedPlan.livingRooms} ห้องรับแขก</span>
+                    <span>{selectedPlan.kitchens} ห้องครัว</span>
+                    <span>{selectedPlan.parking} ที่จอดรถ</span>
+                    <span>{selectedPlan.price} บาท</span>
+                    <span>พื้นที่ใช้สอย {selectedPlan.area} ตร.ม.</span>
                   </div>
                 </div>
               )}
@@ -136,6 +158,8 @@ export default function RequestQuotationPage() {
                   onChange={(e) => setFormData({ ...formData, area: e.target.value })}
                   placeholder="เช่น 150"
                   required
+                  readOnly
+                  className="bg-muted cursor-not-allowed"
                 />
               </div>
 
@@ -150,33 +174,6 @@ export default function RequestQuotationPage() {
                 />
               </div>
 
-              <div className="space-y-3">
-                <Label>ระดับวัสดุ</Label>
-                <RadioGroup
-                  value={formData.materialType}
-                  onValueChange={(value) => setFormData({ ...formData, materialType: value })}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="ประหยัด" id="economy" />
-                    <Label htmlFor="economy" className="font-normal cursor-pointer">
-                      ประหยัด
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="มาตรฐาน" id="standard" />
-                    <Label htmlFor="standard" className="font-normal cursor-pointer">
-                      มาตรฐาน
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="พรีเมียม" id="premium" />
-                    <Label htmlFor="premium" className="font-normal cursor-pointer">
-                      พรีเมียม
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="requirements">ความต้องการเพิ่มเติม</Label>
@@ -200,5 +197,17 @@ export default function RequestQuotationPage() {
         </div>
       </form>
     </div>
+  )
+}
+
+export default function RequestQuotationPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <RequestQuotationForm />
+    </Suspense>
   )
 }

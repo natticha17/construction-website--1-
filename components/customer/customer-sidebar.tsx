@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, FileText, FileSignature, TrendingUp, LogOut, Building2, User } from "lucide-react"
+import { LayoutDashboard, FileText, FileSignature, TrendingUp, LogOut, Building2, User, Globe } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -12,6 +12,7 @@ const menuItems = [
   { href: "/customer/contracts", label: "สัญญา", icon: FileSignature },
   { href: "/customer/progress", label: "ความคืบหน้า", icon: TrendingUp },
   { href: "/customer/profile", label: "โปรไฟล์", icon: User },
+  { href: "/", label: "ไปยังหน้าเว็บไซต์", icon: Globe, external: true },
 ]
 
 export function CustomerSidebar() {
@@ -29,7 +30,7 @@ export function CustomerSidebar() {
       <div className="p-6 border-b">
         <Link href="/" className="flex items-center gap-2">
           <Building2 className="h-8 w-8 text-primary" />
-          <span className="text-xl font-bold">บ้านสร้างฝัน</span>
+          <span className="text-xl font-bold">Piak House Construction</span>
         </Link>
       </div>
 
@@ -38,11 +39,14 @@ export function CustomerSidebar() {
           <Link
             key={item.href}
             href={item.href}
+            target={item.external ? "_blank" : undefined}
             className={cn(
               "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-              pathname === item.href
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              item.external
+                ? "text-blue-600 hover:bg-blue-50"
+                : pathname === item.href
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             <item.icon className="h-5 w-5" />

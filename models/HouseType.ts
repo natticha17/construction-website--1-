@@ -1,0 +1,11 @@
+
+import mongoose, { Schema } from "mongoose"
+
+const HouseTypeSchema = new Schema(
+    {
+        name: { type: String, required: true, unique: true },
+    },
+    { timestamps: true }
+)
+
+export default mongoose.models.HouseType || mongoose.model("HouseType", HouseTypeSchema)

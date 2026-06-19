@@ -4,7 +4,7 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { TrendingUp, Eye, AlertCircle } from "lucide-react"
+import { TrendingUp, Eye, AlertCircle, ArrowLeft } from "lucide-react"
 import { store } from "@/lib/store"
 
 export default async function CustomerProgressPage() {
@@ -12,11 +12,11 @@ export default async function CustomerProgressPage() {
   const customerId = cookieStore.get("customer_id")
 
   if (!customerId) {
-    redirect("/customer/login")
+    redirect("/login")
   }
 
-  const user = store.getUser(customerId.value)
-  const progressList = store.getProjectProgressByCustomer(customerId.value)
+  const user = await store.getUser(customerId.value)
+  const progressList = await store.getProjectProgressByCustomer(customerId.value)
 
   // Check if user is project owner
   if (user?.customerType !== "project_owner") {
@@ -45,6 +45,12 @@ export default async function CustomerProgressPage() {
   return (
     <div className="space-y-6">
       <div>
+        <Button variant="ghost" className="mb-4 pl-0 hover:bg-transparent hover:text-primary" asChild>
+          <Link href="/customer/dashboard" className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            ย้อนกลับ
+          </Link>
+        </Button>
         <h1 className="text-3xl font-bold">ความคืบหน้าโครงการ</h1>
         <p className="text-muted-foreground">ติดตามความคืบหน้าการก่อสร้างของคุณ</p>
       </div>
@@ -95,13 +101,12 @@ export default async function CustomerProgressPage() {
                     {project.milestones.map((milestone) => (
                       <div
                         key={milestone.id}
-                        className={`p-3 rounded-lg text-center ${
-                          milestone.progressPercentage === 100
-                            ? "bg-green-100 text-green-800"
-                            : milestone.progressPercentage > 0
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-muted"
-                        }`}
+                        className={`p-3 rounded-lg text-center ${milestone.progressPercentage === 100
+                          ? "bg-green-100 text-green-800"
+                          : milestone.progressPercentage > 0
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-muted"
+                          }`}
                       >
                         <p className="text-xs font-medium">งวดที่ {milestone.phase}</p>
                         <p className="text-lg font-bold">{milestone.progressPercentage}%</p>

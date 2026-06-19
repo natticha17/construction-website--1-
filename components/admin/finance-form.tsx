@@ -13,33 +13,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Loader2 } from "lucide-react"
 import type { ProjectProgress } from "@/lib/types"
+import { ImageUpload } from "@/components/image-upload"
 
 interface FinanceFormProps {
   projects: ProjectProgress[]
+  initialProjectId?: string
 }
 
 const incomeCategories = [
-  "เงินงวดที่ 1",
+  "เงินมัดจำงวดที่ 1",
   "เงินงวดที่ 2",
   "เงินงวดที่ 3",
   "เงินงวดที่ 4",
-  "เงินงวดที่ 5",
-  "เงินมัดจำ",
   "งานเพิ่มเติม",
   "อื่นๆ",
 ]
 
 const expenseCategories = ["ค่าวัสดุ", "ค่าแรง", "ค่าขนส่ง", "ค่าเครื่องจักร", "ค่าน้ำ-ไฟ", "ค่าดำเนินการ", "อื่นๆ"]
 
-export function FinanceForm({ projects }: FinanceFormProps) {
+export function FinanceForm({ projects, initialProjectId }: FinanceFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [type, setType] = useState<"income" | "expense">("income")
-  const [projectId, setProjectId] = useState("")
+  const [projectId, setProjectId] = useState(initialProjectId || "")
   const [category, setCategory] = useState("")
   const [description, setDescription] = useState("")
   const [amount, setAmount] = useState("")
   const [date, setDate] = useState(new Date().toISOString().split("T")[0])
+  const [receiptImage, setReceiptImage] = useState("")
 
   const categories = type === "income" ? incomeCategories : expenseCategories
   const selectedProject = projects.find((p) => p.id === projectId)
@@ -61,6 +62,7 @@ export function FinanceForm({ projects }: FinanceFormProps) {
           description,
           amount: Number.parseFloat(amount),
           date,
+          receiptImage: type === "expense" ? receiptImage : undefined,
         }),
       })
 
@@ -174,6 +176,17 @@ export function FinanceForm({ projects }: FinanceFormProps) {
               rows={3}
             />
           </div>
+
+          {/* Receipt Image Upload (Expense Only) */}
+          {type === "expense" && (
+            <div className="space-y-2">
+              <Label>รูปภาพใบเสร็จ</Label>
+              <ImageUpload
+                value={receiptImage ? [receiptImage] : []}
+                onChange={(urls) => setReceiptImage(urls[urls.length - 1] || "")}
+              />
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-4">

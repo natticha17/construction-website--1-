@@ -10,6 +10,6 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const progressList = store.getProjectProgressByCustomer(customerId.value)
+  const progressList = await store.getProjectProgressByCustomer(customerId.value)
   return NextResponse.json({ progressList })
 }

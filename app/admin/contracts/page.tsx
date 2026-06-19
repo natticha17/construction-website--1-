@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Eye } from "lucide-react"
+import { Eye, Plus } from "lucide-react"
 import { store } from "@/lib/store"
 
 export default async function AdminContractsPage() {
@@ -14,15 +14,15 @@ export default async function AdminContractsPage() {
   const token = cookieStore.get("admin_token")
 
   if (!token) {
-    redirect("/admin/login")
+    redirect("/login")
   }
 
-  const contracts = store.getContracts()
+  const contracts = await store.getContracts()
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "accepted":
-        return <Badge className="bg-green-500 text-white">ยอมรับแล้ว</Badge>
+        return <Badge className="bg-green-500 text-white">อนุมัติแล้ว</Badge>
       case "completed":
         return <Badge className="bg-blue-500 text-white">เสร็จสิ้น</Badge>
       default:
@@ -35,6 +35,14 @@ export default async function AdminContractsPage() {
       <AdminHeader title="จัดการสัญญา" description="รายการสัญญาทั้งหมด" />
 
       <div className="flex-1 p-8">
+        <div className="flex justify-end mb-4">
+          <Button asChild>
+            <Link href="/admin/contracts/new">
+              <Plus className="mr-2 h-4 w-4" /> สร้างสัญญาใหม่
+            </Link>
+          </Button>
+        </div>
+
         <Card>
           <CardContent className="p-0">
             {contracts.length === 0 ? (
@@ -46,7 +54,7 @@ export default async function AdminContractsPage() {
                     <TableHead>เลขที่สัญญา</TableHead>
                     <TableHead>โครงการ</TableHead>
                     <TableHead>ลูกค้า</TableHead>
-                    <TableHead className="text-right">มูลค่า</TableHead>
+                    <TableHead className="text-left">มูลค่า</TableHead>
                     <TableHead>ระยะเวลา</TableHead>
                     <TableHead>สถานะ</TableHead>
                     <TableHead></TableHead>
@@ -55,10 +63,12 @@ export default async function AdminContractsPage() {
                 <TableBody>
                   {contracts.map((contract) => (
                     <TableRow key={contract.id}>
-                      <TableCell className="font-mono text-sm">{contract.id}</TableCell>
+                      <TableCell className="font-mono text-sm text-blue-600 font-bold">
+                        {contract.contractNumber || contract.id}
+                      </TableCell>
                       <TableCell className="font-medium">{contract.projectName}</TableCell>
                       <TableCell>{contract.customerName}</TableCell>
-                      <TableCell className="text-right font-medium">
+                      <TableCell className="text-left font-medium">
                         {contract.contractValue.toLocaleString()} บาท
                       </TableCell>
                       <TableCell>{contract.constructionPeriod}</TableCell>

@@ -8,25 +8,32 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Eye, Plus } from "lucide-react"
 import { store } from "@/lib/store"
+import { DeleteQuotationButton } from "@/components/admin/delete-quotation-button"
 
 export default async function AdminQuotationsPage() {
   const cookieStore = await cookies()
   const token = cookieStore.get("admin_token")
 
   if (!token) {
-    redirect("/admin/login")
+    redirect("/login")
   }
 
-  const quotations = store.getQuotations()
+  const quotations = await store.getQuotations()
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case "revision_requested":
+        return <Badge className="bg-amber-500 text-white">ขอแก้ไข</Badge>
+      case "revised":
+        return <Badge className="bg-indigo-500 text-white">แก้ไขแล้ว</Badge>
+      case "proposed":
+        return <Badge className="bg-blue-500 text-white">รอตรวจสอบ</Badge>
       case "approved":
-        return <Badge className="bg-green-500 text-white">อนุมัติแล้ว</Badge>
+        return <Badge className="bg-green-600 text-white">ว่าจ้างแล้ว</Badge>
       case "rejected":
-        return <Badge variant="destructive">ไม่อนุมัติ</Badge>
+        return <Badge variant="destructive">ไม่ว่าจ้าง</Badge>
       default:
-        return <Badge variant="secondary">รอพิจารณา</Badge>
+        return <Badge variant="secondary">รอจัดทำ</Badge>
     }
   }
 
@@ -56,31 +63,39 @@ export default async function AdminQuotationsPage() {
                     <TableHead>เลขที่</TableHead>
                     <TableHead>ลูกค้า</TableHead>
                     <TableHead>แบบบ้าน</TableHead>
-                    <TableHead>พื้นที่</TableHead>
-                    <TableHead className="text-right">ยอดรวม</TableHead>
+                    <TableHead>พื้นที่ใช้สอย</TableHead>
+                    <TableHead >ยอดรวม</TableHead>
                     <TableHead>สถานะ</TableHead>
-                    <TableHead>วันที่</TableHead>
+                    <TableHead>วันที่สร้าง</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {quotations.map((quotation) => (
                     <TableRow key={quotation.id}>
-                      <TableCell className="font-mono text-sm">{quotation.id}</TableCell>
+                      <TableCell className="font-mono text-sm text-blue-600 font-bold">
+                        {quotation.quotationNumber || quotation.id}
+                      </TableCell>
                       <TableCell className="font-medium">{quotation.customerName}</TableCell>
                       <TableCell>{quotation.housePlanName}</TableCell>
                       <TableCell>{quotation.area} ตร.ม.</TableCell>
-                      <TableCell className="text-right font-medium">
-                        {quotation.grandTotal.toLocaleString()} บาท
+                      <TableCell className="font-medium">
+                        {(quotation.grandTotal || 0).toLocaleString()} บาท
                       </TableCell>
                       <TableCell>{getStatusBadge(quotation.status)}</TableCell>
                       <TableCell>{new Date(quotation.createdAt).toLocaleDateString("th-TH")}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/admin/quotations/${quotation.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link href={`/admin/quotations/${quotation.id}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <DeleteQuotationButton
+                            id={quotation.id}
+                            quotationNumber={quotation.quotationNumber}
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

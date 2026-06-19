@@ -10,7 +10,7 @@ export function AcceptContractButton({ contractId }: { contractId: string }) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleAccept = async () => {
-    if (!confirm("คุณแน่ใจหรือไม่ที่จะยอมรับสัญญานี้?")) return
+    if (!confirm("คุณแน่ใจหรือไม่ที่จะอนุมัติสัญญานี้?")) return
 
     setIsLoading(true)
     try {
@@ -31,7 +31,7 @@ export function AcceptContractButton({ contractId }: { contractId: string }) {
   return (
     <Button onClick={handleAccept} disabled={isLoading} size="lg">
       {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-      ยอมรับสัญญา
+      อนุมัติสัญญา
     </Button>
   )
 }

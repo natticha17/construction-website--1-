@@ -5,23 +5,26 @@ import { FileText, FileSignature, TrendingUp, AlertCircle } from "lucide-react"
 import { store } from "@/lib/store"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { connectDB } from "@/lib/mongodb"
+import User from "@/models/User"
 
 export default async function CustomerDashboardPage() {
   const cookieStore = await cookies()
   const customerId = cookieStore.get("customer_id")
 
   if (!customerId) {
-    redirect("/customer/login")
+    redirect("/login")
   }
 
-  const user = store.getUser(customerId.value)
+  await connectDB()
+  const user = await User.findById(customerId.value).lean()
   if (!user) {
-    redirect("/customer/login")
+    redirect("/login")
   }
 
-  const quotations = store.getQuotationsByCustomer(customerId.value)
-  const contracts = store.getContractsByCustomer(customerId.value)
-  const progressList = store.getProjectProgressByCustomer(customerId.value)
+  const quotations = await store.getQuotationsByCustomer(customerId.value)
+  const contracts = await store.getContractsByCustomer(customerId.value)
+  const progressList = await store.getProjectProgressByCustomer(customerId.value)
 
   const pendingPayments = progressList.flatMap((p) =>
     p.milestones.filter((m) => m.paymentStatus === "pending" && m.progressPercentage === 100),

@@ -8,16 +8,17 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Edit } from "lucide-react"
 import { store } from "@/lib/store"
+import { DeleteProgressButton } from "@/components/admin/delete-progress-button"
 
 export default async function AdminProgressPage() {
   const cookieStore = await cookies()
   const token = cookieStore.get("admin_token")
 
   if (!token) {
-    redirect("/admin/login")
+    redirect("/login")
   }
 
-  const progressList = store.getProjectProgressList()
+  const progressList = await store.getProjectProgressList()
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -42,12 +43,15 @@ export default async function AdminProgressPage() {
                         อัปเดตล่าสุด: {new Date(project.updatedAt).toLocaleDateString("th-TH")}
                       </CardDescription>
                     </div>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/admin/progress/${project.id}`}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        อัปเดต
-                      </Link>
-                    </Button>
+                    <div className="flex gap-2">
+                      <DeleteProgressButton id={project.id} projectName={project.projectName} />
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/admin/progress/${project.id}`}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          อัปเดต
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -63,22 +67,26 @@ export default async function AdminProgressPage() {
                     {project.milestones.map((milestone) => (
                       <div
                         key={milestone.id}
-                        className={`p-3 rounded-lg text-center ${
-                          milestone.progressPercentage === 100
-                            ? "bg-green-100 text-green-800"
-                            : milestone.progressPercentage > 0
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-muted"
-                        }`}
+                        className={`p-3 rounded-lg text-left flex flex-col justify-between ${milestone.progressPercentage === 100
+                          ? "bg-green-100 text-green-800"
+                          : milestone.progressPercentage > 0
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-muted"
+                          }`}
                       >
-                        <p className="text-xs font-medium">งวดที่ {milestone.phase}</p>
-                        <p className="text-lg font-bold">{milestone.progressPercentage}%</p>
-                        <Badge
-                          variant={milestone.paymentStatus === "paid" ? "default" : "outline"}
-                          className="mt-1 text-xs"
-                        >
-                          {milestone.paymentStatus === "paid" ? "ชำระแล้ว" : "รอชำระ"}
-                        </Badge>
+                        <div>
+                          <p className="text-xs font-bold">งวดที่ {milestone.phase}</p>
+                          <p className="text-[10px] line-clamp-2 mt-1 leading-tight">{milestone.description}</p>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between">
+                          <p className="text-lg font-bold">{milestone.progressPercentage}%</p>
+                          <Badge
+                            variant={milestone.paymentStatus === "paid" ? "default" : "outline"}
+                            className="text-[9px] h-4 px-1"
+                          >
+                            {milestone.paymentStatus === "paid" ? "ชำระแล้ว" : "รอชำระ"}
+                          </Badge>
+                        </div>
                       </div>
                     ))}
                   </div>

@@ -1,10 +1,10 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
+import { formatPriceToMillion } from "@/lib/utils"
+import type { HousePlan } from "@/lib/types"
+import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { BedDouble, Bath, Maximize } from "lucide-react"
-import type { HousePlan } from "@/lib/data"
 
 interface HousePlanCardProps {
   plan: HousePlan
@@ -12,37 +12,63 @@ interface HousePlanCardProps {
 
 export function HousePlanCard({ plan }: HousePlanCardProps) {
   return (
-    <Card className="group overflow-hidden hover:shadow-xl transition-shadow">
-      <div className="relative h-56 overflow-hidden">
-        <Image
-          src={plan.image || "/placeholder.svg"}
-          alt={plan.name}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground">{plan.price} บาท</Badge>
-      </div>
-      <CardContent className="p-6">
-        <h3 className="text-lg font-semibold text-card-foreground mb-2">{plan.name}</h3>
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{plan.description}</p>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-          <span className="flex items-center gap-1">
-            <Maximize className="h-4 w-4" />
-            {plan.area} ตร.ม.
-          </span>
-          <span className="flex items-center gap-1">
-            <BedDouble className="h-4 w-4" />
-            {plan.bedrooms}
-          </span>
-          <span className="flex items-center gap-1">
-            <Bath className="h-4 w-4" />
-            {plan.bathrooms}
-          </span>
+    <Link href={`/house-plans/${plan.id}`} className="group block h-full">
+      <div className="bg-white rounded-[24px] overflow-hidden shadow-2xl shadow-black/5 hover:shadow-black/10 transition-all duration-500 hover:-translate-y-2 h-full flex flex-col border border-[#E7E5E4]">
+        {/* Image Area - Landscape */}
+        <div className="relative aspect-video overflow-hidden bg-[#F5F5F4]">
+          <Image
+            src={plan.image || "/placeholder.svg"}
+            alt={plan.name}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
+          />
+
+          {/* Overlay on hover */}
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         </div>
-        <Button asChild className="w-full">
-          <Link href={`/house-plans/${plan.id}`}>ดูรายละเอียด</Link>
-        </Button>
-      </CardContent>
-    </Card>
+
+        {/* Details Content */}
+        <div className="p-8 flex flex-col flex-1 relative">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h3 className="text-2xl font-bold text-[#1C1917] group-hover:text-primary transition-colors duration-300 font-serif leading-tight mb-1">
+                {plan.name}
+              </h3>
+              <p className="text-xs uppercase tracking-widest text-primary font-bold">
+                {plan.style || "Minimal Nordic Style"}
+              </p>
+            </div>
+            <div className="bg-[#F5F5F4] p-3 rounded-full text-[#1C1917] group-hover:bg-primary group-hover:text-white transition-all duration-500 transform group-hover:rotate-[-45deg]">
+              <ArrowRight className="h-5 w-5" />
+            </div>
+          </div>
+
+          <p className="text-[#78716C] line-clamp-2 mb-8 font-light leading-relaxed text-sm">
+            {plan.description || "แบบบ้านที่ได้รับการออกแบบด้วยความใส่ใจในทุกรายละเอียด สะท้อนเอกลักษณ์และสไตล์การใช้ชีวิตที่เหนือระดับ..."}
+          </p>
+
+          <div className="mt-auto pt-6 border-t border-[#F5F5F4] flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-[10px] uppercase tracking-widest text-[#8C8379] font-bold">ราคาเริ่มต้น</p>
+              <div className="flex items-baseline gap-1 bg-primary/5 px-3 py-1 rounded-lg w-fit">
+                <span className="text-3xl font-bold text-primary drop-shadow-sm">
+                  {formatPriceToMillion(plan.price)}
+                </span>
+                <span className="text-xs font-semibold text-primary/80">ล้านบาท</span>
+              </div>
+            </div>
+            <div className="text-right space-y-1">
+              <p className="text-[10px] uppercase tracking-widest text-[#8C8379] font-bold">พื้นที่ใช้สอย</p>
+              <div className="flex items-baseline justify-end gap-1">
+                <span className="text-2xl font-bold text-[#1C1917]">
+                  {plan.area}
+                </span>
+                <span className="text-xs font-medium text-[#78716C]">ตร.ม.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
   )
 }

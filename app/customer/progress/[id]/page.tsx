@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { ArrowLeft, CheckCircle, Clock, ImageIcon } from "lucide-react"
+import { ArrowLeft, CheckCircle, Clock, ImageIcon, ClipboardList } from "lucide-react"
 import { store } from "@/lib/store"
+import { MilestonePaymentStatus } from "@/components/customer/milestone-payment-status"
 
 export default async function ProgressDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -15,13 +16,16 @@ export default async function ProgressDetailPage({ params }: { params: Promise<{
   const customerId = cookieStore.get("customer_id")
 
   if (!customerId) {
-    redirect("/customer/login")
+    redirect("/login")
   }
 
-  const progress = store.getProjectProgress(id)
+  const progress = await store.getProjectProgress(id)
   if (!progress || progress.customerId !== customerId.value) {
     notFound()
   }
+
+  const contract = await store.getContract(progress.contractId)
+  const isCompleted = contract?.status === "completed"
 
   return (
     <div className="space-y-6">
@@ -36,6 +40,26 @@ export default async function ProgressDetailPage({ params }: { params: Promise<{
           <p className="text-muted-foreground">อัปเดตล่าสุด: {new Date(progress.updatedAt).toLocaleDateString("th-TH")}</p>
         </div>
       </div>
+
+      {isCompleted && (
+        <Card className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-none shadow-xl">
+          <CardContent className="flex flex-col md:flex-row items-center justify-between p-8 gap-6">
+            <div className="flex items-center gap-6 text-center md:text-left">
+              <div className="bg-white/20 p-4 rounded-full backdrop-blur-sm">
+                <CheckCircle className="h-10 w-10 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold mb-1">โครงการก่อสร้างเสร็จสิ้นสมบูรณ์</h2>
+                <p className="text-green-50/90 max-w-md">เราขอแสดงความยินดีที่โครงการของท่านดำเนินการเสร็จสิ้นเรียบร้อยแล้ว ท่านสามารถตรวจสอบและรับใบส่งมอบงานได้ที่ด้านล่าง</p>
+              </div>
+            </div>
+            <Button size="lg" variant="secondary" asChild className="shrink-0 font-bold px-8">
+              <Link href={`/customer/handover/${contract?.id}`}>รับใบส่งมอบงาน (Handover Certificate)</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
 
       <Card>
         <CardHeader>
@@ -85,6 +109,29 @@ export default async function ProgressDetailPage({ params }: { params: Promise<{
             <CardContent className="space-y-4">
               <Progress value={milestone.progressPercentage} className="h-2" />
 
+              {milestone.checklist && milestone.checklist.length > 0 && (
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-lg space-y-3">
+                  <h4 className="font-medium text-slate-700 flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4 text-blue-500" />
+                    รายการงานย่อยที่ดำเนินการ
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+                    {(milestone.checklist as any[]).map((item, idx) => (
+                      <div key={idx} className="flex items-start gap-3">
+                        {item.completed ? (
+                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                        ) : (
+                          <Clock className="h-4 w-4 text-slate-300 mt-0.5 shrink-0" />
+                        )}
+                        <span className={`text-sm ${item.completed ? "text-green-700 font-medium" : "text-slate-700"}`}>
+                          {item.task}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {milestone.images.length > 0 && (
                 <div>
                   <h4 className="font-medium mb-2 flex items-center gap-2">
@@ -106,34 +153,26 @@ export default async function ProgressDetailPage({ params }: { params: Promise<{
                 </div>
               )}
 
-              <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-                <div>
-                  <p className="text-sm text-muted-foreground">จำนวนเงินที่ต้องชำระเมื่อครบงวด</p>
-                  <p className="text-xl font-bold">{milestone.paymentAmount.toLocaleString()} บาท</p>
+              {milestone.report && (
+                <div className="p-4 bg-muted/30 rounded-lg border border-muted-foreground/10 space-y-2">
+                  <h4 className="font-medium flex items-center gap-2 text-primary">
+                    <ClipboardList className="h-4 w-4" />
+                    รายงานการดำเนินงาน
+                  </h4>
+                  <p className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">
+                    {milestone.report}
+                  </p>
                 </div>
-                <div className="text-right">
-                  {milestone.paymentStatus === "paid" ? (
-                    <div className="flex items-center gap-2 text-green-600">
-                      <CheckCircle className="h-5 w-5" />
-                      <div>
-                        <p className="font-medium">ชำระแล้ว</p>
-                        <p className="text-xs">
-                          {milestone.paidAt && new Date(milestone.paidAt).toLocaleDateString("th-TH")}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-amber-600">
-                      <Clock className="h-5 w-5" />
-                      <p className="font-medium">รอชำระ</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+              )}
+
+              <MilestonePaymentStatus
+                projectId={id}
+                milestone={milestone as any}
+              />
             </CardContent>
           </Card>
         ))}
       </div>
-    </div>
+    </div >
   )
 }

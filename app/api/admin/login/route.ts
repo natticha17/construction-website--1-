@@ -1,33 +1,40 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { store } from "@/lib/store"
+import { NextRequest, NextResponse } from "next/server"
+import { connectDB } from "@/lib/mongodb"
+import User from "@/models/User"
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    const { email, password } = await req.json()
 
-    if (!email || !password) {
-      return NextResponse.json({ error: "กรุณากรอกอีเมลและรหัสผ่าน" }, { status: 400 })
-    }
+    await connectDB()
 
-    const user = store.validateUser(email, password)
+    const user = await User.findOne({ email })
+
     if (!user || user.role !== "admin") {
-      return NextResponse.json({ error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" }, { status: 401 })
+      return NextResponse.json(
+        { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" },
+        { status: 401 }
+      )
     }
 
-    const token = `admin_${user.id}_${Date.now()}`
+    if (user.password !== password) {
+      return NextResponse.json(
+        { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" },
+        { status: 401 }
+      )
+    }
 
-    const response = NextResponse.json({ success: true })
-    response.cookies.set("admin_token", token, {
+    const res = NextResponse.json({ success: true })
+
+    res.cookies.set("admin_token", `admin_${user._id}`, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      path: "/",
       maxAge: 60 * 60 * 24,
     })
 
-    return response
-  } catch (error) {
-    console.error("Login error:", error)
-    return NextResponse.json({ error: "เกิดข้อผิดพลาด" }, { status: 500 })
+    return res
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json({ error: "server error" }, { status: 500 })
   }
 }

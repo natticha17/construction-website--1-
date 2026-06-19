@@ -4,43 +4,57 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, FileText, Eye } from "lucide-react"
+import { Plus, FileText, Eye, ArrowLeft } from "lucide-react"
 import { store } from "@/lib/store"
 
 export default async function CustomerQuotationsPage() {
   const cookieStore = await cookies()
   const customerId = cookieStore.get("customer_id")
 
-  if (!customerId) {
-    redirect("/customer/login")
+  if (!customerId || !/^[0-9a-fA-F]{24}$/.test(customerId.value)) {
+    redirect("/login")
   }
 
-  const quotations = store.getQuotationsByCustomer(customerId.value)
+  const quotations = await store.getQuotationsByCustomer(customerId.value)
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case "revision_requested":
+        return <Badge className="bg-amber-500 text-white">ขอแก้ไขแล้ว</Badge>
+      case "revised":
+        return <Badge className="bg-indigo-500 text-white">แก้ไขแล้ว</Badge>
+      case "proposed":
+        return <Badge className="bg-blue-500 text-white">รอตรวจสอบ</Badge>
       case "approved":
-        return <Badge className="bg-green-500 text-white">อนุมัติแล้ว</Badge>
+        return <Badge className="bg-green-600 text-white">ว่าจ้างแล้ว</Badge>
       case "rejected":
-        return <Badge variant="destructive">ไม่อนุมัติ</Badge>
+        return <Badge variant="destructive">ไม่ว่าจ้าง</Badge>
       default:
-        return <Badge variant="secondary">รอพิจารณา</Badge>
+        return <Badge variant="secondary">รอจัดทำ</Badge>
     }
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">ใบเสนอราคา</h1>
-          <p className="text-muted-foreground">รายการใบเสนอราคาเบื้องต้นของคุณ</p>
-        </div>
-        <Button asChild>
-          <Link href="/customer/quotations/request">
-            <Plus className="h-4 w-4 mr-2" />
-            ขอใบเสนอราคาใหม่
+      <div>
+        <Button variant="ghost" className="mb-4 pl-0 hover:bg-transparent hover:text-primary" asChild>
+          <Link href="/customer/dashboard" className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            ย้อนกลับ
           </Link>
         </Button>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">ใบเสนอราคา (ประมาณการ)</h1>
+            <p className="text-muted-foreground">รายการใบเสนอราคาเบื้องต้นของคุณ</p>
+          </div>
+          <Button asChild>
+            <Link href="/customer/quotations/request">
+              <Plus className="h-4 w-4 mr-2" />
+              ขอใบเสนอราคาใหม่
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {quotations.length === 0 ? (
@@ -66,7 +80,7 @@ export default async function CustomerQuotationsPage() {
                       {getStatusBadge(quotation.status)}
                     </CardTitle>
                     <CardDescription>
-                      พื้นที่ {quotation.area} ตร.ม. | วัสดุ {quotation.materialType}
+                      เลขที่: {quotation.quotationNumber || quotation.id} | พื้นที่ใช้สอย {quotation.area} ตร.ม.
                     </CardDescription>
                   </div>
                   <Button variant="outline" size="sm" asChild>
@@ -84,7 +98,9 @@ export default async function CustomerQuotationsPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">ยอดรวมประมาณการ</p>
-                    <p className="text-2xl font-bold text-primary">{quotation.grandTotal.toLocaleString()} บาท</p>
+                    <p className="text-2xl font-bold text-primary">
+                      {quotation.status === "pending" ? "รอเสนอราคา" : `${(quotation.grandTotal || 0).toLocaleString()} บาท`}
+                    </p>
                   </div>
                 </div>
               </CardContent>

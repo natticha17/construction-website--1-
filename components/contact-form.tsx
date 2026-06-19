@@ -15,7 +15,6 @@ export function ContactForm() {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
-    phone: "",
     email: "",
     message: "",
   })
@@ -33,7 +32,7 @@ export function ContactForm() {
 
       if (response.ok) {
         setIsSubmitted(true)
-        setFormData({ name: "", phone: "", email: "", message: "" })
+        setFormData({ name: "", email: "", message: "" })
       }
     } catch (error) {
       console.error("Error submitting form:", error)
@@ -56,9 +55,9 @@ export function ContactForm() {
   }
 
   return (
-    <Card className="max-w-xl mx-auto">
+    <Card className="max-w-xl mx-auto border-none shadow-lg bg-white/50 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle>ส่งข้อความถึงเรา</CardTitle>
+        <CardTitle className="text-2xl">ส่งข้อความถึงเรา</CardTitle>
         <CardDescription>กรอกข้อมูลด้านล่างเพื่อติดต่อสอบถามหรือขอใบเสนอราคา</CardDescription>
       </CardHeader>
       <CardContent>
@@ -68,20 +67,10 @@ export function ContactForm() {
             <Input
               id="name"
               required
+              className="bg-white/80 border-gray-200 focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="กรุณากรอกชื่อ-นามสกุล"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">เบอร์โทรศัพท์ *</Label>
-            <Input
-              id="phone"
-              type="tel"
-              required
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="08X-XXX-XXXX"
             />
           </div>
           <div className="space-y-2">
@@ -89,6 +78,7 @@ export function ContactForm() {
             <Input
               id="email"
               type="email"
+              className="bg-white/80 border-gray-200 focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="example@email.com"
@@ -100,12 +90,13 @@ export function ContactForm() {
               id="message"
               required
               rows={5}
+              className="bg-white/80 border-gray-200 focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300 resize-none"
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
               placeholder="กรุณาระบุรายละเอียดที่ต้องการสอบถาม เช่น แบบบ้านที่สนใจ งบประมาณ พื้นที่ก่อสร้าง ฯลฯ"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button type="submit" className="w-full text-lg py-6 shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

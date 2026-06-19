@@ -1,6 +1,7 @@
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import { store } from "@/lib/store"
+import mongoose from "mongoose"
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -11,11 +12,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const contract = store.getContract(id)
+  const contract = await store.getContract(id)
   if (!contract || contract.customerId !== customerId.value) {
     return NextResponse.json({ error: "Contract not found" }, { status: 404 })
   }
 
-  const updatedContract = store.acceptContract(id)
+  const updatedContract = await store.acceptContract(id)
+
+  // Upgrade user to project_owner
+  await store.updateUserType(customerId.value, "project_owner")
+
+  // Initialize/Sync Project Progress
+  if (updatedContract) {
+    await store.syncProjectProgressWithContract(id)
+  }
+
   return NextResponse.json({ contract: updatedContract })
 }

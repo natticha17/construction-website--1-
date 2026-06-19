@@ -1,9 +1,9 @@
 export function StatsSection() {
   const stats = [
-    { number: "500+", label: "โครงการสำเร็จ" },
+    { number: "100+", label: "โครงการสำเร็จ" },
     { number: "15+", label: "ปีประสบการณ์" },
     { number: "98%", label: "ความพึงพอใจ" },
-    { number: "50+", label: "ทีมงานผู้เชี่ยวชาญ" },
+    { number: "10+", label: "ทีมงานผู้เชี่ยวชาญ" },
   ]
 
   return (

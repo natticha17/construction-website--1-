@@ -15,9 +15,9 @@ export function CTASection() {
             <Link href="/contact">ติดต่อเรา</Link>
           </Button>
           <Button size="lg" variant="outline" asChild>
-            <a href="tel:02-XXX-XXXX">
+            <a href="tel:0810563522">
               <Phone className="mr-2 h-5 w-5" />
-              โทร 02-XXX-XXXX
+              โทร 0810563522
             </a>
           </Button>
         </div>

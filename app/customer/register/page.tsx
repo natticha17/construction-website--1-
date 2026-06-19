@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Building2, Mail, Lock, User, Phone, MapPin, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -12,16 +12,24 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
+import { Suspense } from "react"
 
-export default function CustomerRegisterPage() {
+function CustomerRegisterForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get("redirect")
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
     phone: "",
-    address: "",
+    houseNo: "",
+    village: "",
+    road: "",
+    subDistrict: "",
+    district: "",
+    province: "",
     customerType: "general" as "general" | "project_owner",
   })
   const [error, setError] = useState("")
@@ -47,7 +55,12 @@ export default function CustomerRegisterPage() {
           email: formData.email,
           password: formData.password,
           phone: formData.phone,
-          address: formData.address,
+          houseNo: formData.houseNo,
+          village: formData.village,
+          road: formData.road,
+          subDistrict: formData.subDistrict,
+          district: formData.district,
+          province: formData.province,
           customerType: formData.customerType,
         }),
       })
@@ -59,7 +72,7 @@ export default function CustomerRegisterPage() {
         return
       }
 
-      router.push("/customer/dashboard")
+      router.push(redirect || "/customer/dashboard")
       router.refresh()
     } catch {
       setError("เกิดข้อผิดพลาดในการเชื่อมต่อ")
@@ -75,7 +88,7 @@ export default function CustomerRegisterPage() {
           <div className="flex justify-center mb-4">
             <div className="flex items-center gap-2">
               <Building2 className="h-10 w-10 text-primary" />
-              <span className="text-2xl font-bold">บ้านสร้างฝัน</span>
+              <span className="text-2xl font-bold">Piak House Construction</span>
             </div>
           </div>
           <CardTitle className="text-2xl">สมัครสมาชิก</CardTitle>
@@ -86,7 +99,7 @@ export default function CustomerRegisterPage() {
             {error && <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">{error}</div>}
 
             <div className="space-y-2">
-              <Label htmlFor="name">ชื่อ-นามสกุล</Label>
+              <Label htmlFor="name">ชื่อ-นามสกุล <span className="text-destructive">*</span></Label>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -101,7 +114,7 @@ export default function CustomerRegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">อีเมล</Label>
+              <Label htmlFor="email">อีเมล <span className="text-destructive">*</span></Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -118,7 +131,7 @@ export default function CustomerRegisterPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="password">รหัสผ่าน</Label>
+                <Label htmlFor="password">รหัสผ่าน <span className="text-destructive">*</span></Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -133,7 +146,7 @@ export default function CustomerRegisterPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">ยืนยันรหัสผ่าน</Label>
+                <Label htmlFor="confirmPassword">ยืนยันรหัสผ่าน <span className="text-destructive">*</span></Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -159,22 +172,77 @@ export default function CustomerRegisterPage() {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="pl-10"
-                  required
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="address">ที่อยู่</Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Textarea
-                  id="address"
-                  placeholder="บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="pl-10 min-h-[80px]"
-                  required
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="houseNo">บ้านเลขที่</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="houseNo"
+                    placeholder="123/45"
+                    value={formData.houseNo}
+                    onChange={(e) => setFormData({ ...formData, houseNo: e.target.value })}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="village">หมู่บ้าน</Label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="village"
+                    placeholder="หมู่บ้าน..."
+                    value={formData.village}
+                    onChange={(e) => setFormData({ ...formData, village: e.target.value })}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="road">ถนน</Label>
+                <Input
+                  id="road"
+                  placeholder="ถนน..."
+                  value={formData.road}
+                  onChange={(e) => setFormData({ ...formData, road: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="subDistrict">ตำบล/แขวง</Label>
+                <Input
+                  id="subDistrict"
+                  placeholder="ตำบล..."
+                  value={formData.subDistrict}
+                  onChange={(e) => setFormData({ ...formData, subDistrict: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="district">อำเภอ/เขต</Label>
+                <Input
+                  id="district"
+                  placeholder="อำเภอ..."
+                  value={formData.district}
+                  onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="province">จังหวัด</Label>
+                <Input
+                  id="province"
+                  placeholder="จังหวัด..."
+                  value={formData.province}
+                  onChange={(e) => setFormData({ ...formData, province: e.target.value })}
                 />
               </div>
             </div>
@@ -210,7 +278,7 @@ export default function CustomerRegisterPage() {
             </Button>
             <p className="text-sm text-muted-foreground text-center">
               มีบัญชีอยู่แล้ว?{" "}
-              <Link href="/customer/login" className="text-primary hover:underline">
+              <Link href="/login" className="text-primary hover:underline">
                 เข้าสู่ระบบ
               </Link>
             </p>
@@ -218,5 +286,13 @@ export default function CustomerRegisterPage() {
         </form>
       </Card>
     </div>
+  )
+}
+
+export default function CustomerRegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <CustomerRegisterForm />
+    </Suspense>
   )
 }

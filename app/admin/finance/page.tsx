@@ -14,35 +14,55 @@ export default async function AdminFinancePage() {
   const token = cookieStore.get("admin_token")
 
   if (!token) {
-    redirect("/admin/login")
+    redirect("/login")
   }
 
-  const financialRecords = store.getFinancialRecords()
-  const progressList = store.getProjectProgressList()
+  const financialRecords = await store.getFinancialRecords()
+  const progressList = await store.getProjectProgressList()
 
   const totalIncome = financialRecords.filter((r) => r.type === "income").reduce((sum, r) => sum + r.amount, 0)
   const totalExpense = financialRecords.filter((r) => r.type === "expense").reduce((sum, r) => sum + r.amount, 0)
   const profit = totalIncome - totalExpense
 
-  // Group records by project for summary
-  const projectSummary = progressList.map((project) => {
-    const records = financialRecords.filter((r) => r.projectId === project.id)
-    const income = records.filter((r) => r.type === "income").reduce((sum, r) => sum + r.amount, 0)
-    const expense = records.filter((r) => r.type === "expense").reduce((sum, r) => sum + r.amount, 0)
-    return {
-      id: project.id,
-      name: project.projectName,
-      income,
-      expense,
-      profit: income - expense,
+  // Group records by project name for summary
+  const projectSummaryMap = new Map<string, { income: number; expense: number }>()
+
+  // Initialize with all projects from progressList to ensure they appear
+  progressList.forEach((p) => {
+    if (!projectSummaryMap.has(p.projectName)) {
+      projectSummaryMap.set(p.projectName, { income: 0, expense: 0 })
     }
   })
+
+  // Add financial records to the map based on projectName
+  financialRecords.forEach((r) => {
+    const summary = projectSummaryMap.get(r.projectName) || { income: 0, expense: 0 }
+    if (r.type === "income") summary.income += r.amount
+    else summary.expense += r.amount
+    projectSummaryMap.set(r.projectName, summary)
+  })
+
+  const projectSummary = Array.from(projectSummaryMap.entries()).map(([name, data]) => ({
+    name,
+    income: data.income,
+    expense: data.expense,
+    profit: data.income - data.expense,
+  }))
 
   return (
     <div className="flex flex-col min-h-screen">
       <AdminHeader title="รายรับ-รายจ่าย" description="ระบบบันทึกรายรับรายจ่ายแต่ละโครงการ" />
 
       <div className="flex-1 p-8 space-y-6">
+        <div className="flex justify-end">
+          <Button asChild>
+            <Link href="/admin/finance/new">
+              <Plus className="mr-2 h-4 w-4" />
+              เพิ่มรายการ
+            </Link>
+          </Button>
+        </div>
+
         {/* Summary Cards */}
         <div className="grid gap-6 md:grid-cols-3">
           <Card>
@@ -51,7 +71,7 @@ export default async function AdminFinancePage() {
               <TrendingUp className="h-5 w-5 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-600">{totalIncome.toLocaleString()} บาท</div>
+              <div className="text-3xl font-bold text-green-600">{(totalIncome || 0).toLocaleString()} บาท</div>
               <p className="text-xs text-muted-foreground mt-1">จากทุกโครงการ</p>
             </CardContent>
           </Card>
@@ -62,7 +82,7 @@ export default async function AdminFinancePage() {
               <TrendingDown className="h-5 w-5 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-red-600">{totalExpense.toLocaleString()} บาท</div>
+              <div className="text-3xl font-bold text-red-600">{(totalExpense || 0).toLocaleString()} บาท</div>
               <p className="text-xs text-muted-foreground mt-1">ค่าวัสดุและค่าแรง</p>
             </CardContent>
           </Card>
@@ -73,8 +93,8 @@ export default async function AdminFinancePage() {
               <Wallet className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className={`text-3xl font-bold ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>
-                {profit.toLocaleString()} บาท
+              <div className={`text-3xl font-bold ${(profit || 0) >= 0 ? "text-green-600" : "text-red-600"}`}>
+                {(profit || 0).toLocaleString()} บาท
               </div>
               <p className="text-xs text-muted-foreground mt-1">รายรับ - รายจ่าย</p>
             </CardContent>
@@ -101,72 +121,25 @@ export default async function AdminFinancePage() {
                 </TableHeader>
                 <TableBody>
                   {projectSummary.map((project) => (
-                    <TableRow key={project.id}>
-                      <TableCell className="font-medium">{project.name}</TableCell>
-                      <TableCell className="text-right text-green-600">+{project.income.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-red-600">-{project.expense.toLocaleString()}</TableCell>
+                    <TableRow key={project.name}>
+                      <TableCell className="font-medium">
+                        <Link
+                          href={`/admin/finance/project/${encodeURIComponent(project.name)}`}
+                          className="hover:underline text-primary"
+                        >
+                          {project.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-right text-green-600">+{(project.income || 0).toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-red-600">-{(project.expense || 0).toLocaleString()}</TableCell>
                       <TableCell
-                        className={`text-right font-medium ${project.profit >= 0 ? "text-green-600" : "text-red-600"}`}
+                        className={`text-right font-medium ${(project.profit || 0) >= 0 ? "text-green-600" : "text-red-600"}`}
                       >
-                        {project.profit >= 0 ? "+" : ""}
-                        {project.profit.toLocaleString()}
+                        {(project.profit || 0) >= 0 ? "+" : ""}
+                        {(project.profit || 0).toLocaleString()}
                       </TableCell>
                     </TableRow>
                   ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* All Records */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>รายการทั้งหมด</CardTitle>
-            <Button asChild>
-              <Link href="/admin/finance/new">
-                <Plus className="mr-2 h-4 w-4" />
-                เพิ่มรายการ
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {financialRecords.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">ยังไม่มีรายการบันทึก</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>วันที่</TableHead>
-                    <TableHead>โครงการ</TableHead>
-                    <TableHead>ประเภท</TableHead>
-                    <TableHead>หมวดหมู่</TableHead>
-                    <TableHead>รายละเอียด</TableHead>
-                    <TableHead className="text-right">จำนวนเงิน</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {financialRecords
-                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                    .map((record) => (
-                      <TableRow key={record.id}>
-                        <TableCell>{new Date(record.date).toLocaleDateString("th-TH")}</TableCell>
-                        <TableCell>{record.projectName}</TableCell>
-                        <TableCell>
-                          <Badge variant={record.type === "income" ? "default" : "destructive"}>
-                            {record.type === "income" ? "รายรับ" : "รายจ่าย"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{record.category}</TableCell>
-                        <TableCell className="max-w-[200px] truncate">{record.description}</TableCell>
-                        <TableCell
-                          className={`text-right font-medium ${record.type === "income" ? "text-green-600" : "text-red-600"}`}
-                        >
-                          {record.type === "income" ? "+" : "-"}
-                          {record.amount.toLocaleString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
                 </TableBody>
               </Table>
             )}

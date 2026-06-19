@@ -2,27 +2,14 @@ import mongoose from "mongoose"
 
 const MONGODB_URI = process.env.MONGODB_URI!
 
-if (!MONGODB_URI) {
-  throw new Error("Please define MONGODB_URI in .env.local")
-}
+let cached = (global as any).mongoose || { conn: null, promise: null }
 
-/**
- * ป้องกัน Next.js ต่อ DB ซ้ำตอน hot reload
- */
-let cached = global.mongoose
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null }
-}
-
-async function connectDB() {
-  if (cached.conn) {
-    return cached.conn
-  }
+export async function connectDB() {
+  if (cached.conn) return cached.conn
 
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI, {
-      bufferCommands: false,
+      family: 4,
     })
   }
 
@@ -30,4 +17,4 @@ async function connectDB() {
   return cached.conn
 }
 
-export default connectDB
+; (global as any).mongoose = cached

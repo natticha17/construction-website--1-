@@ -1,40 +1,58 @@
-import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
-import { store } from "@/lib/store"
+import { connectDB } from "@/lib/mongodb"
+import User from "@/models/User"
+import bcrypt from "bcryptjs"
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    const { email, password } = await req.json()
 
-    const user = store.validateUser(email, password)
-    if (!user || user.role !== "customer") {
-      return NextResponse.json({ error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" }, { status: 401 })
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "กรุณากรอกอีเมลและรหัสผ่าน" },
+        { status: 400 }
+      )
     }
 
-    // Set auth cookie
-    const token = `customer_${user.id}_${Date.now()}`
-    const cookieStore = await cookies()
-    cookieStore.set("customer_token", token, {
+    await connectDB()
+
+    const user = await User.findOne({ email })
+
+    if (!user || user.role !== "customer") {
+      return NextResponse.json(
+        { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" },
+        { status: 401 }
+      )
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password)
+    if (!isMatch) {
+      return NextResponse.json(
+        { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" },
+        { status: 401 }
+      )
+    }
+
+    // ✅ สร้าง response ก่อน
+    const response = NextResponse.json({ success: true })
+
+    // ✅ set cookie ผ่าน response เท่านั้น
+    response.cookies.set("customer_id", user._id.toString(), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
-       path: "/",
-    })
-    cookieStore.set("customer_id", user.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
       path: "/",
     })
 
-    return NextResponse.json({
-      success: true,
-      user: { id: user.id, name: user.name, email: user.email },
+    response.cookies.set("customer_token", "logged-in", {
+      httpOnly: true,
+      path: "/",
     })
-  } catch {
-    return NextResponse.json({ error: "เกิดข้อผิดพลาด" }, { status: 500 })
+
+    return response
+  } catch (error) {
+    console.error("Customer login error:", error)
+    return NextResponse.json(
+      { error: "เกิดข้อผิดพลาด" },
+      { status: 500 }
+    )
   }
 }

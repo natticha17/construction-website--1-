@@ -12,6 +12,9 @@ import {
   FileSignature,
   TrendingUp,
   Wallet,
+  Globe,
+  Inbox,
+  Images,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -19,7 +22,9 @@ import { cn } from "@/lib/utils"
 const navItems = [
   { href: "/admin", label: "แดชบอร์ด", icon: Home },
   { href: "/admin/house-plans", label: "จัดการแบบบ้าน", icon: FileText },
+  { href: "/admin/showcase", label: "จัดการผลงาน", icon: Images },
   { href: "/admin/customers", label: "จัดการลูกค้า", icon: Users },
+  { href: "/admin/inquiries", label: "ข้อความ", icon: Inbox },
   { href: "/admin/quotations", label: "ใบเสนอราคา", icon: ClipboardList },
   { href: "/admin/contracts", label: "สัญญา", icon: FileSignature },
   { href: "/admin/progress", label: "ความคืบหน้าโครงการ", icon: TrendingUp },
@@ -31,19 +36,21 @@ export function AdminSidebar() {
   const router = useRouter()
 
   const handleLogout = async () => {
-    await fetch("/api/admin/logout", { method: "POST" })
-    router.push("/admin/login")
+    await fetch("/api/auth/logout", { method: "POST" })
+    router.push("/")
     router.refresh()
   }
 
   return (
-    <aside className="w-64 min-h-screen bg-sidebar text-sidebar-foreground flex flex-col">
+    <aside className="w-64 min-h-screen bg-sidebar text-sidebar-foreground flex flex-col print:hidden">
       <div className="p-6 border-b border-sidebar-border">
         <Link href="/admin" className="flex items-center gap-2">
           <Building2 className="h-8 w-8 text-primary" />
           <span className="text-xl font-bold">Admin</span>
         </Link>
       </div>
+
+
 
       <nav className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-1">
@@ -66,7 +73,17 @@ export function AdminSidebar() {
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border space-y-2">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+          asChild
+        >
+          <Link href="/" target="_blank">
+            <Globe className="mr-3 h-5 w-5 text-blue-400" />
+            ไปหน้าเว็บไซต์
+          </Link>
+        </Button>
         <Button
           variant="ghost"
           className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
